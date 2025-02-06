@@ -4,7 +4,7 @@
 #+email: jjbigorra@gmail.com
 
 
-[[https://raster.shields.io/badge/Rust-1.84-b7410e.png]] [[https://raster.shields.io/badge/Nix-Flake-80A4ED.png]]
+[[https://raster.shields.io/badge/Rust-v1.84-b7410e.png]] [[https://raster.shields.io/badge/Nix-Flake-1f5cd6.png]]
 
 pop-server - a puppet server, at your command.
 
