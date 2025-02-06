@@ -1,8 +1,10 @@
-#+title: pop-server
+#+title: 🍹 pop-server
 #+options: num:nil
 #+language: en
 #+email: jjbigorra@gmail.com
 
+
+[[https://raster.shields.io/badge/Rust-1.84-b7410e.png]] [[https://raster.shields.io/badge/Nix-Flake-80A4ED.png]]
 
 pop-server - a puppet server, at your command.
 
@@ -10,7 +12,7 @@ This a web-server that helps you simulate behaviours and test integrations with 
 
 ** Overview
 
-`pop-server` is a lightweight HTTP server that allows dynamic behavior registration and retrieval. It acts as a simple puppet server where you can define request-response behaviors dynamically via HTTP requests. This can be useful for testing, mocking APIs, or creating programmable server responses.
+~pop-server~ is a lightweight HTTP server that allows dynamic behavior registration and retrieval. It acts as a simple puppet server where you can define request-response behaviors dynamically via HTTP requests. This can be useful for testing, mocking APIs, or creating programmable server responses.
 
 ** Features
 - Register custom behaviors dynamically via HTTP headers and request bodies.
