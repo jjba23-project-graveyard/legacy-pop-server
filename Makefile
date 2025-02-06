@@ -45,3 +45,6 @@ test-default-behavior:
 
 docker-release:
 	podman build -t "jjba23/pop-server:$(CONTAINER_TAG)" .
+docker-push:
+	podman push "jjba23/pop-server:$(CONTAINER_TAG)"
+

@@ -22,6 +22,8 @@ This a web-server that helps you simulate behaviours and test integrations with 
 
 A Nix flake is provided at the root of this repo.
 
+I also regularly upload new Docker images to Docker hub: https://hub.docker.com/repository/docker/jjba23/pop-server/general
+
 If you don't use Nix, ensure you have Rust installed. You can install Rust via rustup: https://rustup.rs/
 
 #+begin_src shell
@@ -94,7 +96,7 @@ If an incoming request matches a registered behavior (method & path), the server
 Otherwise, it returns a `404 Not Found`.
 
 ** License
-`pop-server` is licensed under the **GNU General Public License v3.0**. See the [LICENSE](https://www.gnu.org/licenses/gpl-3.0.html) file for details.
+`pop-server` is licensed under the *GNU General Public License v3.0*. See the COPYING file or https://www.gnu.org/licenses/gpl-3.0.html for more details.
 
 ** Author
 Created by *Josep Bigorra (jjba23)*. For contributions, issues, or questions, contact: [jjbigorra@gmail.com](mailto:jjbigorra@gmail.com).
