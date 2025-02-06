@@ -1,4 +1,4 @@
-// pop-server - your test orchestration master of puppets
+// pop-server - a puppet server, at your command
 
 // Copyright (C) 2025 Josep Bigorra (jjba23) <jjbigorra@gmail.com>
 
@@ -24,15 +24,53 @@ use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::{Request, Response};
 use hyper_util::rt::TokioIo;
+use model::RouteBehavior;
+use paris::info;
 use tokio::net::TcpListener;
 
-async fn hello(_: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
-    Ok(Response::new(Full::new(Bytes::from("Hello, World!"))))
+mod model;
+
+async fn register_behaviour(
+    request: Request<hyper::body::Incoming>,
+) -> Result<Response<Full<Bytes>>, Infallible> {
+    info!("starting registration of behavior");
+
+    Ok(Response::new(Full::new(Bytes::from(
+        "registered behavior successfully!",
+    ))))
+}
+
+async fn fetch_behaviour(
+    request: Request<hyper::body::Incoming>,
+) -> Result<Response<Full<Bytes>>, Infallible> {
+    info!("fetching behavior");
+
+    Ok(Response::new(Full::new(Bytes::from(
+        "fetched behavior successfully!",
+    ))))
+}
+
+async fn pop_server(
+    request: Request<hyper::body::Incoming>,
+    behaviors: &Vec<RouteBehavior>,
+) -> Result<Response<Full<Bytes>>, Infallible> {
+    info!("incoming request: {:?}", request);
+
+    match request.method().as_str() {
+        "POST" => match request.uri().path() {
+            "/pop-server/register-behaviour" => register_behaviour(request).await,
+            _ => fetch_behaviour(request).await,
+        },
+        _ => fetch_behaviour(request).await,
+    }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    info!("\nstarting `pop-server`\n");
+
     let addr = SocketAddr::from(([127, 0, 0, 1], 50088));
+    info!("socket address: {}", addr);
 
     // We create a TcpListener and bind it to 127.0.0.1:50088
     let listener = TcpListener::bind(addr).await?;
@@ -45,12 +83,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // `hyper::rt` IO traits.
         let io = TokioIo::new(stream);
 
+        let mut behaviours: Vec<RouteBehavior> = Vec::new();
+
         // Spawn a tokio task to serve multiple connections concurrently
         tokio::task::spawn(async move {
-            // Finally, we bind the incoming connection to our `hello` service
             if let Err(err) = http1::Builder::new()
-                // `service_fn` converts our function in a `Service`
-                .serve_connection(io, service_fn(hello))
+                .serve_connection(io, service_fn(|request| pop_server(request, &behaviours)))
                 .await
             {
                 eprintln!("Error serving connection: {:?}", err);

@@ -1,4 +1,4 @@
-# pop-server - your test orchestration master of puppets
+# pop-server - a puppet server, at your command
 
 # Copyright (C) 2025 Josep Bigorra (jjba23) <jjbigorra@gmail.com>
 
@@ -22,6 +22,7 @@ edition = "2021"
 authors = ["Josep Bigorra <jjbigorra@gmail.com>"]
 
 [dependencies]
+paris = { version = "1.0", features = ["timestamps", "macros"]}
 hyper = { version = "1", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
 http-body-util = "0.1"

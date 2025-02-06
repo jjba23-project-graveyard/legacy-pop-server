@@ -1,4 +1,4 @@
-# pop-test - your test orchestration master of puppets
+# pop-test - a puppet server, at your command
 
 # Copyright (C) 2025 Josep Bigorra (jjba23) <jjbigorra@gmail.com>
 
