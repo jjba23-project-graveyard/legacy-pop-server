@@ -15,6 +15,9 @@
 # You should have received a copy of the Lesser GNU General Public License
 # along with pop-test.  If not, see <https://www.gnu.org/licenses/>.
 
+run:
+	nix develop -c cargo run
+
 fmt:
 	cargo fix --allow-dirty --bin "pop-test"
 	cargo clippy --fix --allow-dirty
