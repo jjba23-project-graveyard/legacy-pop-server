@@ -43,8 +43,10 @@ test-default-behavior:
 	@echo ""
 
 
-docker-release:
-	podman build -t "jjba23/pop-server:$(CONTAINER_TAG)" .
-docker-push:
-	podman push "jjba23/pop-server:$(CONTAINER_TAG)"
+container-build:
+	podman build -t jjba23/pop-server:$(CONTAINER_TAG) .
+container-run:
+	podman run jjba23/pop-server:$(CONTAINER_TAG)
+container-push:
+	podman push jjba23/pop-server:$(CONTAINER_TAG)
 

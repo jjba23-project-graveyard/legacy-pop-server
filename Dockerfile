@@ -20,4 +20,4 @@ COPY --from=build /app/target/x86_64-unknown-linux-gnu/release/pop-server /app/p
 
 EXPOSE 50088
 
-CMD ["./pop-server"]
+CMD ["/app/pop-server"]
