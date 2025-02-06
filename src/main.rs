@@ -17,6 +17,7 @@
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use http_body_util::Full;
 use hyper::body::Bytes;
@@ -27,13 +28,24 @@ use hyper_util::rt::TokioIo;
 use model::RouteBehavior;
 use paris::info;
 use tokio::net::TcpListener;
+use tokio::sync::Mutex;
 
 mod model;
+
+static mut BEHAVIORS: Vec<RouteBehavior> = vec![];
 
 async fn register_behaviour(
     request: Request<hyper::body::Incoming>,
 ) -> Result<Response<Full<Bytes>>, Infallible> {
     info!("starting registration of behavior");
+
+    unsafe {
+        BEHAVIORS.push(RouteBehavior {
+            method: "GET".to_string(),
+            path: "/usage".to_string(),
+            body: "".to_string(),
+        });
+    };
 
     Ok(Response::new(Full::new(Bytes::from(
         "registered behavior successfully!",
@@ -52,7 +64,6 @@ async fn fetch_behaviour(
 
 async fn pop_server(
     request: Request<hyper::body::Incoming>,
-    behaviors: &Vec<RouteBehavior>,
 ) -> Result<Response<Full<Bytes>>, Infallible> {
     info!("incoming request: {:?}", request);
 
@@ -72,23 +83,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let addr = SocketAddr::from(([127, 0, 0, 1], 50088));
     info!("socket address: {}", addr);
 
-    // We create a TcpListener and bind it to 127.0.0.1:50088
     let listener = TcpListener::bind(addr).await?;
 
-    // We start a loop to continuously accept incoming connections
     loop {
         let (stream, _) = listener.accept().await?;
-
-        // Use an adapter to access something implementing `tokio::io` traits as if they implement
-        // `hyper::rt` IO traits.
         let io = TokioIo::new(stream);
 
-        let mut behaviours: Vec<RouteBehavior> = Vec::new();
-
-        // Spawn a tokio task to serve multiple connections concurrently
         tokio::task::spawn(async move {
             if let Err(err) = http1::Builder::new()
-                .serve_connection(io, service_fn(|request| pop_server(request, &behaviours)))
+                .serve_connection(io, service_fn(|request| pop_server(request)))
                 .await
             {
                 eprintln!("Error serving connection: {:?}", err);
