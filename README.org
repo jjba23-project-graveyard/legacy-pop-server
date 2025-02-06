@@ -1,0 +1,11 @@
+#+title: pop-server
+#+options: num:nil
+#+language: en
+#+email: jjbigorra@gmail.com
+
+
+pop-server - a puppet server, at your command.
+
+This a web-server that helps you simulate behaviours and test integrations with external systems.
+
+
