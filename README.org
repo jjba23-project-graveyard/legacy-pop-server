@@ -28,34 +28,15 @@ I also regularly upload new Docker images to Docker hub: https://hub.docker.com/
 
 If you don't use Nix, ensure you have Rust installed. You can install Rust via rustup: https://rustup.rs/
 
-#+begin_src shell
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-#+end_src
-
-Then, clone the repository and build the project:
-
-#+begin_src
-  git clone https://codeberg.org/jjba23/pop-server.git
-  cd pop-server
-  cargo build --release
-#+end_src
+The project uses Cargo to build Rust code and [[file:Makefile][Makefile]] for automating tasks and the build processes. 
 
 ** Usage
 
-By default, the server listens on ~127.0.0.1:50088~.
+By default, the server listens on ~http://127.0.0.1:50088~
 
-See the Makefile for useful commands.
+*** Register a Behavior
 
-Otherwise, run the compiled binary:
-
-#+begin_src shell
-  ./target/release/pop-server
-#+end_src
-
-
-** Register a Behavior
-
-To register a new behavior (in memory), send a *POST* request to `/pop-server/register-behavior` with custom headers and a body:
+To register a new behavior (in memory), send a *POST* request to ~/pop-server/register-behavior~ with custom headers and a body:
 
 #+begin_src shell
   curl -X POST "http://127.0.0.1:50088/pop-server/register-behavior" \
@@ -66,7 +47,7 @@ To register a new behavior (in memory), send a *POST* request to `/pop-server/re
      --data '{"message": "Hello, world!"}'
 #+end_src
 
-** Fetch a Behavior
+*** Fetch a Behavior
 
 Once a behavior is registered (in-memory), you can retrieve it by making a request matching the registered method and path:
 
@@ -74,7 +55,7 @@ Once a behavior is registered (in-memory), you can retrieve it by making a reque
   curl -X GET "http://127.0.0.1:50088/test"
 #+end_src
 
-If a match is found, the stored behavior is returned; otherwise, a `404 Not Found` response is given.
+If a match is found, the stored behavior is returned; otherwise, a ~404 Not Found~ response is given.
 
 * API Reference
 
@@ -83,10 +64,10 @@ If a match is found, the stored behavior is returned; otherwise, a `404 Not Foun
 Endpoint to register behaviors.
 
 *Headers:*
-  - `x-pop-server-method`: HTTP method (e.g., `GET`, `POST`, etc.)
-  - `x-pop-server-path`: Path to match (e.g., `/test`)
-  - `x-pop-server-content-type`: Content-Type of response
-  - `x-pop-server-status`: HTTP status code (default: `200`)
+  - ~x-pop-server-method~: HTTP method (e.g., ~GET~, ~POST~, etc.)
+  - ~x-pop-server-path~: Path to match (e.g., ~/test~)
+  - ~x-pop-server-content-type~: Content-Type of response
+  - ~x-pop-server-status~: HTTP status code (default: ~200~)
     
 *Body:*
   - JSON or any other valid body content that you wish to later return.
@@ -95,11 +76,12 @@ Endpoint to register behaviors.
 
 If an incoming request matches a registered behavior (method & path), the server responds with the stored content.
 
-Otherwise, it returns a `404 Not Found`.
+Otherwise, it returns a ~404 Not Found~.
 
 ** License
-`pop-server` is licensed under the *GNU General Public License v3.0*. See the COPYING file or https://www.gnu.org/licenses/gpl-3.0.html for more details.
+
+~pop-server~ is licensed under the *GNU General Public License v3.0*. See the COPYING file or https://www.gnu.org/licenses/gpl-3.0.html for more details.
 
 ** Author
-Created by *Josep Bigorra (jjba23)*. For contributions, issues, or questions, contact: [jjbigorra@gmail.com](mailto:jjbigorra@gmail.com).
+Created by *Josep Bigorra (jjba23)*. For contributions, issues, or questions, contact: mailto:jjbigorra@gmail.com.
 
