@@ -19,7 +19,7 @@ run:
 	nix develop -c cargo run
 
 fmt:
-	cargo fix --allow-dirty --bin "pop-test"
+	cargo fix --allow-dirty --bin "pop-server"
 	cargo clippy --fix --allow-dirty
 	find . -maxdepth 8 -name "*.rs" -type f -exec rustfmt --edition 2021 {} \;
 test: fmt
@@ -43,3 +43,5 @@ test-default-behavior:
 	@echo ""
 
 
+docker-release:
+	podman build -t "jjba23/pop-server:$(CONTAINER_TAG)" .
