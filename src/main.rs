@@ -26,7 +26,7 @@ use hyper::service::service_fn;
 use hyper::{Method, Request, Response};
 use hyper_util::rt::TokioIo;
 use model::RouteBehavior;
-use paris::info;
+use paris::{error, info};
 use tokio::net::TcpListener;
 
 mod model;
@@ -42,7 +42,7 @@ fn get_header(headers: &hyper::HeaderMap, key: &str) -> Option<String> {
 
 async fn register_behaviour(
     request: Request<hyper::body::Incoming>,
-) -> Result<Response<Full<Bytes>>, Infallible> {
+) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
     info!("Starting registration of behavior");
 
     // Extract headers safely
@@ -83,38 +83,37 @@ async fn register_behaviour(
 
 async fn fetch_behaviour(
     request: Request<hyper::body::Incoming>,
-) -> Result<Response<Full<Bytes>>, Infallible> {
-    info!("fetching behavior");
+) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
+    info!("Fetching behavior");
 
-    let b = unsafe {
-        BEHAVIORS.iter().find(|b| {
-            b.method == request.method().as_str().to_string()
-                && b.path == request.uri().path().to_string()
-        })
+    let behavior = unsafe {
+        BEHAVIORS
+            .iter()
+            .find(|b| b.method == request.method().as_str() && b.path == request.uri().path())
     };
 
-    match b {
+    match behavior {
         Some(behavior) => {
-            info!("found behavior: {:?}", behavior);
+            info!("Found behavior: {:?}", behavior);
 
-            Ok(Response::builder()
+            Response::builder()
                 .status(behavior.status)
-                .header("content-type", behavior.content_type.to_string())
+                .header("content-type", &behavior.content_type)
                 .body(Full::new(Bytes::from(behavior.body.clone())))
-                .unwrap())
         }
-        _ => {
-            info!("no match found!");
-            Ok(Response::new(Full::new(Bytes::from(
-                "no match found, using default behavior!",
-            ))))
+        None => {
+            info!("No match found!");
+
+            Response::builder().status(404).body(Full::new(Bytes::from(
+                "No match found, using default behavior!",
+            )))
         }
     }
 }
 
 async fn pop_server(
     request: Request<hyper::body::Incoming>,
-) -> Result<Response<Full<Bytes>>, Infallible> {
+) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
     info!("incoming request: {:?}", request);
 
     match (request.method(), request.uri().path()) {

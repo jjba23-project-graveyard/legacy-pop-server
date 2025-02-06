@@ -27,16 +27,19 @@ test: fmt
 
 
 test-register-behavior:
-	curl -vv -X POST \
+	curl -v -X POST \
 		--header "x-pop-server-path: /api/v1/some-endpoint" \
 		--header "x-pop-server-method: GET" \
 		--header "x-pop-server-content-type: application/json" \
 		--header "x-pop-server-status: 200" \
 		--data '{"meta":"xyz","data":"xyz"}' \
 		http://localhost:50088/pop-server/register-behavior
+	@echo ""
 test-fetch-behavior:
-	curl -vv -X GET http://localhost:50088/api/v1/some-endpoint
+	curl -v -X GET http://localhost:50088/api/v1/some-endpoint
+	@echo ""
 test-default-behavior:
-	curl -vv -X GET http://localhost:50088/whatever
+	curl -v -X GET http://localhost:50088/whatever
+	@echo ""
 
 
