@@ -17,9 +17,9 @@
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
-use std::sync::Arc;
 
-use http_body_util::Full;
+use http_body_util::{BodyExt, Full};
+
 use hyper::body::Bytes;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
@@ -39,11 +39,23 @@ async fn register_behaviour(
 ) -> Result<Response<Full<Bytes>>, Infallible> {
     info!("starting registration of behavior");
 
+    let wanted_method = request.method().as_str().to_string();
+    let wanted_path = request.uri().path().to_string();
+    let request_body_bytes = request
+        .into_body()
+        .collect()
+        .await
+        .unwrap()
+        .to_bytes()
+        .to_vec();
+
+    let wanted_body: String = String::from_utf8(request_body_bytes.into_iter().collect()).unwrap();
+
     unsafe {
         BEHAVIORS.push(RouteBehavior {
-            method: "GET".to_string(),
-            path: "/usage".to_string(),
-            body: "".to_string(),
+            method: wanted_method,
+            path: wanted_path,
+            body: wanted_body,
         });
     };
 
