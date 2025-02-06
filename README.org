@@ -8,4 +8,94 @@ pop-server - a puppet server, at your command.
 
 This a web-server that helps you simulate behaviours and test integrations with external systems.
 
+** Overview
+
+`pop-server` is a lightweight HTTP server that allows dynamic behavior registration and retrieval. It acts as a simple puppet server where you can define request-response behaviors dynamically via HTTP requests. This can be useful for testing, mocking APIs, or creating programmable server responses.
+
+** Features
+- Register custom behaviors dynamically via HTTP headers and request bodies.
+- Fetch stored behaviors based on incoming requests.
+- Supports custom HTTP methods, paths, content types, and response statuses.
+- Built with *Rust*, using *Hyper* for HTTP handling and *Tokio* for async networking.
+
+** Installation
+
+A Nix flake is provided at the root of this repo.
+
+If you don't use Nix, ensure you have Rust installed. You can install Rust via rustup: https://rustup.rs/
+
+#+begin_src shell
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+#+end_src
+
+Then, clone the repository and build the project:
+
+#+begin_src
+  git clone https://codeberg.org/jjba23/pop-server.git
+  cd pop-server
+  cargo build --release
+#+end_src
+
+** Usage
+
+By default, the server listens on ~127.0.0.1:50088~.
+
+See the Makefile for useful commands.
+
+Otherwise, run the compiled binary:
+
+#+begin_src shell
+  ./target/release/pop-server
+#+end_src
+
+
+** Register a Behavior
+
+To register a new behavior (in memory), send a *POST* request to `/pop-server/register-behavior` with custom headers and a body:
+
+#+begin_src shell
+  curl -X POST "http://127.0.0.1:50088/pop-server/register-behavior" \
+     -H "x-pop-server-method: GET" \
+     -H "x-pop-server-path: /test" \
+     -H "x-pop-server-content-type: application/json" \
+     -H "x-pop-server-status: 200" \
+     --data '{"message": "Hello, world!"}'
+#+end_src
+
+** Fetch a Behavior
+
+Once a behavior is registered (in-memory), you can retrieve it by making a request matching the registered method and path:
+
+#+begin_src shell
+  curl -X GET "http://127.0.0.1:50088/test"
+#+end_src
+
+If a match is found, the stored behavior is returned; otherwise, a `404 Not Found` response is given.
+
+* API Reference
+
+** POST /pop-server/register-behavior
+
+Endpoint to register behaviors.
+
+*Headers:*
+  - `x-pop-server-method`: HTTP method (e.g., `GET`, `POST`, etc.)
+  - `x-pop-server-path`: Path to match (e.g., `/test`)
+  - `x-pop-server-content-type`: Content-Type of response
+  - `x-pop-server-status`: HTTP status code (default: `200`)
+    
+*Body:*
+  - JSON or any other valid body content that you wish to later return.
+
+** Dynamic Behavior Matching
+
+If an incoming request matches a registered behavior (method & path), the server responds with the stored content.
+
+Otherwise, it returns a `404 Not Found`.
+
+** License
+`pop-server` is licensed under the **GNU General Public License v3.0**. See the [LICENSE](https://www.gnu.org/licenses/gpl-3.0.html) file for details.
+
+** Author
+Created by *Josep Bigorra (jjba23)*. For contributions, issues, or questions, contact: [jjbigorra@gmail.com](mailto:jjbigorra@gmail.com).
 
