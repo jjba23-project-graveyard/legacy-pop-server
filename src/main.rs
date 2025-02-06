@@ -33,44 +33,29 @@ mod model;
 
 static mut BEHAVIORS: Vec<RouteBehavior> = vec![];
 
+fn get_header(headers: &hyper::HeaderMap, key: &str) -> Option<String> {
+    headers
+        .get(key)
+        .and_then(|v| v.to_str().ok())
+        .map(String::from)
+}
+
 async fn register_behaviour(
     request: Request<hyper::body::Incoming>,
 ) -> Result<Response<Full<Bytes>>, Infallible> {
-    info!("starting registration of behavior");
+    info!("Starting registration of behavior");
 
-    let wanted_method = request
-        .headers()
-        .get("x-pop-server-method")
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
+    // Extract headers safely
+    let wanted_method = get_header(request.headers(), "x-pop-server-method").unwrap_or_default();
+    let wanted_path = get_header(request.headers(), "x-pop-server-path").unwrap_or_default();
+    let wanted_content_type = get_header(request.headers(), "x-pop-server-content-type")
+        .unwrap_or_else(|| "application/json".to_string());
+    let wanted_status: u16 = get_header(request.headers(), "x-pop-server-status")
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(200);
 
-    let wanted_path = request
-        .headers()
-        .get("x-pop-server-path")
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
-
-    let wanted_content_type = request
-        .headers()
-        .get("x-pop-server-content-type")
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
-
-    let wanted_status = request
-        .headers()
-        .get("x-pop-server-status")
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
-
-    let request_body_bytes = request
+    // Read the request body safely
+    let body_bytes = request
         .into_body()
         .collect()
         .await
@@ -78,20 +63,21 @@ async fn register_behaviour(
         .to_bytes()
         .to_vec();
 
-    let wanted_body: String = String::from_utf8(request_body_bytes.into_iter().collect()).unwrap();
+    let wanted_body = String::from_utf8_lossy(&body_bytes).into_owned();
 
+    // Store the behavior (assuming BEHAVIORS is a global mutable variable)
     unsafe {
         BEHAVIORS.push(RouteBehavior {
             method: wanted_method,
-            status: wanted_status.parse().unwrap_or(200),
+            status: wanted_status,
             path: wanted_path,
             content_type: wanted_content_type,
             body: wanted_body,
         });
-    };
+    }
 
     Ok(Response::new(Full::new(Bytes::from(
-        "registered behavior successfully!",
+        "Registered behavior successfully!",
     ))))
 }
 
