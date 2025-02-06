@@ -23,12 +23,11 @@ use http_body_util::{BodyExt, Full};
 use hyper::body::Bytes;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
-use hyper::{Request, Response};
+use hyper::{Method, Request, Response};
 use hyper_util::rt::TokioIo;
 use model::RouteBehavior;
 use paris::info;
 use tokio::net::TcpListener;
-use tokio::sync::Mutex;
 
 mod model;
 
@@ -39,8 +38,38 @@ async fn register_behaviour(
 ) -> Result<Response<Full<Bytes>>, Infallible> {
     info!("starting registration of behavior");
 
-    let wanted_method = request.method().as_str().to_string();
-    let wanted_path = request.uri().path().to_string();
+    let wanted_method = request
+        .headers()
+        .get("x-pop-server-method")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    let wanted_path = request
+        .headers()
+        .get("x-pop-server-path")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    let wanted_content_type = request
+        .headers()
+        .get("x-pop-server-content-type")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    let wanted_status = request
+        .headers()
+        .get("x-pop-server-status")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+
     let request_body_bytes = request
         .into_body()
         .collect()
@@ -54,7 +83,9 @@ async fn register_behaviour(
     unsafe {
         BEHAVIORS.push(RouteBehavior {
             method: wanted_method,
+            status: wanted_status.parse().unwrap_or(200),
             path: wanted_path,
+            content_type: wanted_content_type,
             body: wanted_body,
         });
     };
@@ -69,9 +100,30 @@ async fn fetch_behaviour(
 ) -> Result<Response<Full<Bytes>>, Infallible> {
     info!("fetching behavior");
 
-    Ok(Response::new(Full::new(Bytes::from(
-        "fetched behavior successfully!",
-    ))))
+    let b = unsafe {
+        BEHAVIORS.iter().find(|b| {
+            b.method == request.method().as_str().to_string()
+                && b.path == request.uri().path().to_string()
+        })
+    };
+
+    match b {
+        Some(behavior) => {
+            info!("found behavior: {:?}", behavior);
+
+            Ok(Response::builder()
+                .status(behavior.status)
+                .header("content-type", behavior.content_type.to_string())
+                .body(Full::new(Bytes::from(behavior.body.clone())))
+                .unwrap())
+        }
+        _ => {
+            info!("no match found!");
+            Ok(Response::new(Full::new(Bytes::from(
+                "no match found, using default behavior!",
+            ))))
+        }
+    }
 }
 
 async fn pop_server(
@@ -79,11 +131,8 @@ async fn pop_server(
 ) -> Result<Response<Full<Bytes>>, Infallible> {
     info!("incoming request: {:?}", request);
 
-    match request.method().as_str() {
-        "POST" => match request.uri().path() {
-            "/pop-server/register-behaviour" => register_behaviour(request).await,
-            _ => fetch_behaviour(request).await,
-        },
+    match (request.method(), request.uri().path()) {
+        (&Method::POST, "/pop-server/register-behavior") => register_behaviour(request).await,
         _ => fetch_behaviour(request).await,
     }
 }

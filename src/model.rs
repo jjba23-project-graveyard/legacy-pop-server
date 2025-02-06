@@ -19,5 +19,7 @@
 pub struct RouteBehavior {
     pub method: String,
     pub path: String,
+    pub content_type: String,
     pub body: String,
+    pub status: u16,
 }
