@@ -1,19 +1,19 @@
-# pop-test - a puppet server, at your command
+# pop-server - a puppet server, at your command
 
 # Copyright (C) 2025 Josep Bigorra (jjba23) <jjbigorra@gmail.com>
 
-# pop-test is free software: you can redistribute it and/or modify
+# pop-server is free software: you can redistribute it and/or modify
 # it under the terms of the Lesser GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-# pop-test is distributed in the hope that it will be useful,
+# pop-server is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # Lesser GNU General Public License for more details.
 
 # You should have received a copy of the Lesser GNU General Public License
-# along with pop-test.  If not, see <https://www.gnu.org/licenses/>.
+# along with pop-server.  If not, see <https://www.gnu.org/licenses/>.
 
 run:
 	nix develop -c cargo run
@@ -25,18 +25,17 @@ fmt:
 test: fmt
 	cargo test
 
-
 test-register-behavior:
 	curl -v -X POST \
-		--header "x-pop-server-path: /api/v1/some-endpoint" \
+		--header "x-pop-server-path: /some-endpoint" \
 		--header "x-pop-server-method: GET" \
 		--header "x-pop-server-content-type: application/json" \
 		--header "x-pop-server-status: 200" \
 		--data '{"meta":"xyz","data":"xyz"}' \
-		http://localhost:50088/pop-server/register-behavior
+		http://localhost:50088/api/v2/pop-server/register-behavior
 	@echo ""
 test-fetch-behavior:
-	curl -v -X GET http://localhost:50088/api/v1/some-endpoint
+	curl -v -X GET http://localhost:50088/some-endpoint
 	@echo ""
 test-default-behavior:
 	curl -v -X GET http://localhost:50088/whatever

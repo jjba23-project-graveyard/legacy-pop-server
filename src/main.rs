@@ -15,108 +15,39 @@
 // You should have received a copy of the GNU General Public License
 // along with pop-server.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::convert::Infallible;
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
-use http_body_util::{BodyExt, Full};
+use http_body_util::Full;
 
+use behavior::{fetch_behaviour, register_behaviour};
 use hyper::body::Bytes;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::{Method, Request, Response};
 use hyper_util::rt::TokioIo;
 use model::RouteBehavior;
-use paris::{error, info};
+use paris::{error, info, success};
 use tokio::net::TcpListener;
 
+mod behavior;
 mod model;
 
-fn get_header(headers: &hyper::HeaderMap, key: &str) -> Option<String> {
-    headers
-        .get(key)
-        .and_then(|v| v.to_str().ok())
-        .map(String::from)
-}
+struct PopServerRoute {}
 
-async fn register_behaviour(
-    request: Request<hyper::body::Incoming>,
-    bs: &Arc<Mutex<Vec<RouteBehavior>>>,
-) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
-    info!("Starting registration of behavior");
-
-    // Extract headers safely
-    let wanted_method = get_header(request.headers(), "x-pop-server-method").unwrap_or_default();
-    let wanted_path = get_header(request.headers(), "x-pop-server-path").unwrap_or_default();
-    let wanted_content_type = get_header(request.headers(), "x-pop-server-content-type")
-        .unwrap_or_else(|| "application/json".to_string());
-    let wanted_status: u16 = get_header(request.headers(), "x-pop-server-status")
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(200);
-
-    // Read the request body safely
-    let body_bytes = request
-        .into_body()
-        .collect()
-        .await
-        .unwrap()
-        .to_bytes()
-        .to_vec();
-
-    let wanted_body = String::from_utf8_lossy(&body_bytes).into_owned();
-
-    let mut arc = bs.lock().unwrap();
-    arc.push(RouteBehavior {
-        method: wanted_method,
-        status: wanted_status,
-        path: wanted_path,
-        content_type: wanted_content_type,
-        body: wanted_body,
-    });
-
-    Ok(Response::new(Full::new(Bytes::from(
-        "Registered behavior successfully!",
-    ))))
-}
-
-async fn fetch_behaviour(
-    request: Request<hyper::body::Incoming>,
-    bs: &Arc<Mutex<Vec<RouteBehavior>>>,
-) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
-    info!("Fetching behavior");
-    let bss = Arc::clone(bs);
-    let the = bss.lock().unwrap();
-    let behavior = the
-        .iter()
-        .find(|b| b.method == request.method().as_str() && b.path == request.uri().path());
-
-    match behavior {
-        Some(behavior) => {
-            info!("Found behavior: {:?}", behavior);
-
-            Response::builder()
-                .status(behavior.status)
-                .header("content-type", &behavior.content_type)
-                .body(Full::new(Bytes::from(behavior.body.clone())))
-        }
-        None => {
-            info!("No match found!");
-
-            Response::builder().status(404).body(Full::new(Bytes::from(
-                "No match found, using default behavior!",
-            )))
-        }
-    }
+impl PopServerRoute {
+    pub const REGISTER_BEHAVIOR: &str = "/api/v2/pop-server/register-behavior";
 }
 
 async fn pop_server(
     request: Request<hyper::body::Incoming>,
-    bs: &Arc<Mutex<Vec<RouteBehavior>>>,
+    bs: &Arc<Mutex<HashMap<String, RouteBehavior>>>,
 ) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
     info!("incoming request: {:?}", request);
 
     match (request.method(), request.uri().path()) {
-        (&Method::POST, "/pop-server/register-behavior") => register_behaviour(request, bs).await,
+        (&Method::POST, PopServerRoute::REGISTER_BEHAVIOR) => register_behaviour(request, bs).await,
         _ => fetch_behaviour(request, bs).await,
     }
 }
@@ -130,18 +61,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let listener = TcpListener::bind(addr).await?;
 
-    let bs: Arc<Mutex<Vec<RouteBehavior>>> = Arc::new(Mutex::new(Vec::new()));
+    let behaviors: Arc<Mutex<HashMap<String, RouteBehavior>>> =
+        Arc::new(Mutex::new(HashMap::new()));
 
     loop {
         let (stream, _) = listener.accept().await?;
         let io = TokioIo::new(stream);
-        let bss = Arc::clone(&bs);
+        let behaviors = Arc::clone(&behaviors);
         tokio::task::spawn(async move {
             if let Err(err) = http1::Builder::new()
-                .serve_connection(io, service_fn(|request| pop_server(request, &bss)))
+                .serve_connection(io, service_fn(|request| pop_server(request, &behaviors)))
                 .await
             {
-                eprintln!("Error serving connection: {:?}", err);
+                error!("Error serving connection: {:?}", err);
             }
         });
     }

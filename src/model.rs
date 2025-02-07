@@ -15,6 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with pop-server.  If not, see <https://www.gnu.org/licenses/>.
 
+use hyper::Request;
+
 #[derive(Debug, Clone)]
 pub struct RouteBehavior {
     pub method: String,

@@ -36,10 +36,10 @@ By default, the server listens on ~http://127.0.0.1:50088~
 
 *** Register a Behavior
 
-To register a new behavior (in memory), send a *POST* request to ~/pop-server/register-behavior~ with custom headers and a body:
+To register a new behavior (in memory), send a *POST* request to ~/api/v2/pop-server/register-behavior~ with custom headers and a body:
 
 #+begin_src shell
-  curl -X POST "http://127.0.0.1:50088/pop-server/register-behavior" \
+  curl -X POST "http://127.0.0.1:50088/api/v2/pop-server/register-behavior" \
      -H "x-pop-server-method: GET" \
      -H "x-pop-server-path: /test" \
      -H "x-pop-server-content-type: application/json" \
@@ -59,7 +59,7 @@ If a match is found, the stored behavior is returned; otherwise, a ~404 Not Foun
 
 * API Reference
 
-** POST /pop-server/register-behavior
+** POST /api/v2/pop-server/register-behavior
 
 Endpoint to register behaviors.
 
