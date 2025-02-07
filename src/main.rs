@@ -56,7 +56,7 @@ async fn pop_server(
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     info!("\nstarting `pop-server`\n");
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 50088));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 50088));
     info!("socket address: {}", addr);
 
     let listener = TcpListener::bind(addr).await?;
