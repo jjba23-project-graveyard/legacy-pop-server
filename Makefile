@@ -41,6 +41,10 @@ test-fetch-behavior:
 test-default-behavior:
 	curl -v -X GET http://localhost:50088/whatever
 	@echo ""
+test-scenario:
+	make test-default-behavior
+	make test-register-behavior
+	make test-fetch-behavior
 
 
 container-build:

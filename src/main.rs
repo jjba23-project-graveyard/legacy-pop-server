@@ -17,6 +17,7 @@
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
+use std::sync::{Arc, Mutex};
 
 use http_body_util::{BodyExt, Full};
 
@@ -31,8 +32,6 @@ use tokio::net::TcpListener;
 
 mod model;
 
-static mut BEHAVIORS: Vec<RouteBehavior> = vec![];
-
 fn get_header(headers: &hyper::HeaderMap, key: &str) -> Option<String> {
     headers
         .get(key)
@@ -42,6 +41,7 @@ fn get_header(headers: &hyper::HeaderMap, key: &str) -> Option<String> {
 
 async fn register_behaviour(
     request: Request<hyper::body::Incoming>,
+    bs: &Arc<Mutex<Vec<RouteBehavior>>>,
 ) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
     info!("Starting registration of behavior");
 
@@ -65,16 +65,14 @@ async fn register_behaviour(
 
     let wanted_body = String::from_utf8_lossy(&body_bytes).into_owned();
 
-    // Store the behavior (assuming BEHAVIORS is a global mutable variable)
-    unsafe {
-        BEHAVIORS.push(RouteBehavior {
-            method: wanted_method,
-            status: wanted_status,
-            path: wanted_path,
-            content_type: wanted_content_type,
-            body: wanted_body,
-        });
-    }
+    let mut arc = bs.lock().unwrap();
+    arc.push(RouteBehavior {
+        method: wanted_method,
+        status: wanted_status,
+        path: wanted_path,
+        content_type: wanted_content_type,
+        body: wanted_body,
+    });
 
     Ok(Response::new(Full::new(Bytes::from(
         "Registered behavior successfully!",
@@ -83,14 +81,14 @@ async fn register_behaviour(
 
 async fn fetch_behaviour(
     request: Request<hyper::body::Incoming>,
+    bs: &Arc<Mutex<Vec<RouteBehavior>>>,
 ) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
     info!("Fetching behavior");
-
-    let behavior = unsafe {
-        BEHAVIORS
-            .iter()
-            .find(|b| b.method == request.method().as_str() && b.path == request.uri().path())
-    };
+    let bss = Arc::clone(bs);
+    let the = bss.lock().unwrap();
+    let behavior = the
+        .iter()
+        .find(|b| b.method == request.method().as_str() && b.path == request.uri().path());
 
     match behavior {
         Some(behavior) => {
@@ -113,12 +111,13 @@ async fn fetch_behaviour(
 
 async fn pop_server(
     request: Request<hyper::body::Incoming>,
+    bs: &Arc<Mutex<Vec<RouteBehavior>>>,
 ) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
     info!("incoming request: {:?}", request);
 
     match (request.method(), request.uri().path()) {
-        (&Method::POST, "/pop-server/register-behavior") => register_behaviour(request).await,
-        _ => fetch_behaviour(request).await,
+        (&Method::POST, "/pop-server/register-behavior") => register_behaviour(request, bs).await,
+        _ => fetch_behaviour(request, bs).await,
     }
 }
 
@@ -131,13 +130,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let listener = TcpListener::bind(addr).await?;
 
+    let bs: Arc<Mutex<Vec<RouteBehavior>>> = Arc::new(Mutex::new(Vec::new()));
+
     loop {
         let (stream, _) = listener.accept().await?;
         let io = TokioIo::new(stream);
-
+        let bss = Arc::clone(&bs);
         tokio::task::spawn(async move {
             if let Err(err) = http1::Builder::new()
-                .serve_connection(io, service_fn(|request| pop_server(request)))
+                .serve_connection(io, service_fn(|request| pop_server(request, &bss)))
                 .await
             {
                 eprintln!("Error serving connection: {:?}", err);
