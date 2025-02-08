@@ -80,17 +80,24 @@ pub async fn register_behaviour(
 
     let wanted_body = String::from_utf8_lossy(&body_bytes).into_owned();
 
-    let mut behaviors = behaviors.lock().unwrap();
-    let b = RouteBehavior {
+    let route_behavior = RouteBehavior {
         method: wanted_method,
         status: wanted_status,
         path: wanted_path,
         content_type: wanted_content_type,
         body: wanted_body,
     };
-    let k = make_behavior_key(b.clone());
+    let k = make_behavior_key(route_behavior.clone());
+    let behaviors = behaviors.lock();
 
-    behaviors.insert(k.clone(), b.clone());
+    match behaviors {
+        Ok(mut b) => {
+            b.insert(k.clone(), route_behavior.clone());
+            ()
+        }
+        Err(_) => error!("could not acquire mutex lock"),
+    }
+
     success!("registered behavior successfully: {}", k.clone());
 
     Ok(Response::new(Full::new(Bytes::from(
@@ -103,12 +110,19 @@ pub async fn fetch_behaviour(
     behaviors: &Arc<Mutex<HashMap<String, RouteBehavior>>>,
 ) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
     let behaviors = Arc::clone(behaviors);
-    let behaviors_map = behaviors.lock().unwrap();
+    let behaviors_map = behaviors.lock();
     let k = make_behavior_key_from_request(&request).clone();
     info!("fetching behavior, looking for key: `{}`", k);
-    let behavior = behaviors_map.get(k.as_str());
 
-    match behavior {
+    let found_behavior = match behaviors_map {
+        Ok(b) => b.get(k.as_str()),
+        Err(_) => {
+            error!("could not acquire mutex lock");
+            None
+        }
+    };
+
+    match found_behavior {
         Some(behavior) => {
             success!("found behavior: {:?}", behavior);
 
