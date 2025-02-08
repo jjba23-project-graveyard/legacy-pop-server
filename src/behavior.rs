@@ -114,13 +114,7 @@ pub async fn fetch_behaviour(
     let k = make_behavior_key_from_request(&request).clone();
     info!("fetching behavior, looking for key: `{}`", k);
 
-    let found_behavior = match behaviors_map {
-        Ok(b) => b.get(k.as_str()),
-        Err(_) => {
-            error!("could not acquire mutex lock");
-            None
-        }
-    };
+    let found_behavior = behaviors_map.ok().and_then(|b| b.get(k.as_str()).cloned());
 
     match found_behavior {
         Some(behavior) => {
@@ -128,7 +122,7 @@ pub async fn fetch_behaviour(
 
             Response::builder()
                 .status(behavior.status)
-                .header("content-type", &behavior.content_type)
+                .header("content-type", behavior.content_type.clone()) // Clone required
                 .body(Full::new(Bytes::from(behavior.body.clone())))
         }
         None => {
