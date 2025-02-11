@@ -1,4 +1,4 @@
-#+title: 🍹 pop-server
+#+title: 🎶 pop-server
 #+options: num:nil
 #+language: en
 #+email: jjbigorra@gmail.com
