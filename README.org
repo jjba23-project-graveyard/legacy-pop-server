@@ -34,6 +34,18 @@ The project uses Cargo to build Rust code and [[file:Makefile][Makefile]] for au
 
 By default, the server listens on ~http://127.0.0.1:50088~
 
+It can be useful to use different logging levels, with the ~RUST_LOG~ environment variable, e.g. ~debug~, ~info~
+
+You can start pop-server with command-line options,
+
+~-p~ or ~--port~ (optional, number) - HTTP port, that defaults to 50088
+
+~-r~ or ~--register-route~ (optional, string) - Route where behaviors are registered, defaults to ~"/api/v2/pop-server/register-behavior"~
+
+~-h~ or ~--help~ for help
+
+~-v~ or ~--version~ for version
+
 *** Register a Behavior
 
 To register a new behavior (in memory), send a *POST* request to ~/api/v2/pop-server/register-behavior~ with custom headers and a body:
