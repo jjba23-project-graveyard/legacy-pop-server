@@ -23,7 +23,7 @@ use http_body_util::{BodyExt, Full};
 use hyper::body::Bytes;
 use hyper::Request;
 use hyper::Response;
-use paris::{error, info, success};
+use log::{error, info};
 
 use crate::model::RouteBehavior;
 
@@ -98,7 +98,7 @@ pub async fn register_behaviour(
         Err(_) => error!("could not acquire mutex lock"),
     }
 
-    success!("registered behavior successfully: {}", k.clone());
+    info!("registered behavior successfully: {}", k.clone());
 
     Ok(Response::new(Full::new(Bytes::from(
         "registered behavior successfully!",
@@ -118,7 +118,7 @@ pub async fn fetch_behaviour(
 
     match found_behavior {
         Some(behavior) => {
-            success!("found behavior: {:?}", behavior);
+            info!("found behavior: {:?}", behavior);
 
             Response::builder()
                 .status(behavior.status)

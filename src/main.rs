@@ -27,36 +27,59 @@ use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::{Method, Request, Response};
 use hyper_util::rt::TokioIo;
+use log::{error, info};
 use model::RouteBehavior;
-use paris::{error, info, success};
 use tokio::net::TcpListener;
 
 mod behavior;
 mod model;
 
+use clap::Parser;
+
+//
+//
+//
+struct PopServer {}
+impl PopServer {
+    pub const DEFAULT_PORT: u16 = 50088;
+    pub const DEFAULT_REGISTER_ROUTE: &str = "/api/v2/pop-server/register-behavior";
+}
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short('p'), long("port"))]
+    port: Option<u16>,
+    #[arg(short('r'), long("register-route"))]
+    register_route: Option<String>,
+}
+
 struct PopServerRoute {}
 
-impl PopServerRoute {
-    pub const REGISTER_BEHAVIOR: &str = "/api/v2/pop-server/register-behavior";
-}
+impl PopServerRoute {}
 
 async fn pop_server(
     request: Request<hyper::body::Incoming>,
     bs: &Arc<Mutex<HashMap<String, RouteBehavior>>>,
+    register_route: String,
 ) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
     info!("incoming request: {:?}", request);
 
     match (request.method(), request.uri().path()) {
-        (&Method::POST, PopServerRoute::REGISTER_BEHAVIOR) => register_behaviour(request, bs).await,
+        (&Method::POST, route) if route == register_route => register_behaviour(request, bs).await,
         _ => fetch_behaviour(request, bs).await,
     }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    info!("\nstarting `pop-server`\n");
+    env_logger::init();
+    info!("\npop-server starting up\n");
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 50088));
+    info!("parsing command-line arguments");
+    let args = Args::parse();
+
+    let addr = SocketAddr::from(([0, 0, 0, 0], args.port.unwrap_or(PopServer::DEFAULT_PORT)));
     info!("socket address: {}", addr);
 
     let listener = TcpListener::bind(addr).await?;
@@ -64,13 +87,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let behaviors: Arc<Mutex<HashMap<String, RouteBehavior>>> =
         Arc::new(Mutex::new(HashMap::new()));
 
+    let register_route = &args
+        .register_route
+        .unwrap_or(PopServer::DEFAULT_REGISTER_ROUTE.to_string());
+
     loop {
+        let reg_route: String = register_route.clone();
         let (stream, _) = listener.accept().await?;
         let io = TokioIo::new(stream);
         let behaviors = Arc::clone(&behaviors);
         tokio::task::spawn(async move {
             if let Err(err) = http1::Builder::new()
-                .serve_connection(io, service_fn(|request| pop_server(request, &behaviors)))
+                .serve_connection(
+                    io,
+                    service_fn(|request| pop_server(request, &behaviors, reg_route.clone())),
+                )
                 .await
             {
                 error!("Error serving connection: {:?}", err);

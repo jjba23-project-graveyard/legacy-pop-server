@@ -16,7 +16,7 @@
 # along with pop-server.  If not, see <https://www.gnu.org/licenses/>.
 
 run:
-	nix develop -c cargo run
+	RUST_LOG=debug nix develop -c cargo run
 
 fmt:
 	cargo fix --allow-dirty --bin "pop-server"

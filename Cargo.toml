@@ -17,13 +17,15 @@
 
 [package]
 name = "pop-server"
-version = "0.2.4"
+version = "0.3.0"
 edition = "2021"
 authors = ["Josep Bigorra <jjbigorra@gmail.com>"]
 
 [dependencies]
-paris = { version = "1.0", features = ["timestamps", "macros"]}
 hyper = { version = "1", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
 http-body-util = "0.1"
 hyper-util = { version = "0.1", features = ["full"] }
+log = "0.4"
+env_logger = "0.11.6"
+clap = { version = "4.5.28", features = ["derive"] }
