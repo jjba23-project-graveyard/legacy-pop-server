@@ -54,10 +54,6 @@ struct Args {
     register_route: Option<String>,
 }
 
-struct PopServerRoute {}
-
-impl PopServerRoute {}
-
 async fn pop_server(
     request: Request<hyper::body::Incoming>,
     bs: &Arc<Mutex<HashMap<String, RouteBehavior>>>,
