@@ -36,26 +36,24 @@ By default, the server listens on ~http://127.0.0.1:50088~
 
 It can be useful to use different logging levels, with the ~RUST_LOG~ environment variable, e.g. ~debug~, ~info~
 
-You can start pop-server with command-line options,
+You can start pop-server with certain environment variables to override behaviors:
 
-~-p~ or ~--port~ (optional, number) - HTTP port, that defaults to 50088
+~POP_SERVER_LISTEN_PORT~ - HTTP port where pop-server listens, defaults to ~50088~
 
-~-r~ or ~--register-route~ (optional, string) - Route where behaviors are registered, defaults to ~"/api/v2/pop-server/register-behavior"~
+~POP_SERVER_REGISTER_ROUTE~ - Route where behaviors are registered, defaults to ~/api/v2/pop-server/register-behavior~
 
-~-h~ or ~--help~ for help
-
-~-v~ or ~--version~ for version
 
 *** Register a Behavior
 
-To register a new behavior (in memory), send a *POST* request to ~/api/v2/pop-server/register-behavior~ with custom headers and a body:
+To register a new behavior (in memory), send a *POST* request to the register route, by default ~/api/v2/pop-server/register-behavior~ , with custom headers and a body:
 
 #+begin_src shell
   curl -X POST "http://127.0.0.1:50088/api/v2/pop-server/register-behavior" \
-     -H "x-pop-server-method: GET" \
-     -H "x-pop-server-path: /test" \
-     -H "x-pop-server-content-type: application/json" \
-     -H "x-pop-server-status: 200" \
+     -H "content-type: application/json" \       
+     -H "x-pop-server-request-method: GET" \
+     -H "x-pop-server-request-path: /test" \
+     -H "x-pop-server-response-content-type: application/json" \
+     -H "x-pop-server-response-status: 200" \
      --data '{"message": "Hello, world!"}'
 #+end_src
 
@@ -76,10 +74,11 @@ If a match is found, the stored behavior is returned; otherwise, a ~404 Not Foun
 Endpoint to register behaviors.
 
 *Headers:*
-  - ~x-pop-server-method~: HTTP method (e.g., ~GET~, ~POST~, etc.)
-  - ~x-pop-server-path~: Path to match (e.g., ~/test~)
-  - ~x-pop-server-content-type~: Content-Type of response
-  - ~x-pop-server-status~: HTTP status code (default: ~200~)
+  - ~x-pop-server-request-method~: HTTP method (e.g., ~GET~, ~POST~, etc.)
+  - ~x-pop-server-request-path~: Path to match (e.g., ~/test~)
+  - ~x-pop-server-response-content-type~: Content-type of response
+  - ~x-pop-server-response-status~: HTTP status code (default: ~200~)
+  - ~x-pop-server-request-content-type~: Optional, Content-type of the incoming request, useful for e.g. POST
     
 *Body:*
   - JSON or any other valid body content that you wish to later return.

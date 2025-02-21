@@ -3,7 +3,7 @@
 // Copyright (C) 2025 Josep Bigorra (jjba23) <jjbigorra@gmail.com>
 
 // pop-server is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
+// it under the terms of the Lesser GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
@@ -12,10 +12,11 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-// You should have received a copy of the GNU General Public License
+// You should have received a copy of the Lesser GNU General Public License
 // along with pop-server.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::collections::HashMap;
+use std::env;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
@@ -34,8 +35,6 @@ use tokio::net::TcpListener;
 mod behavior;
 mod model;
 
-use clap::Parser;
-
 //
 //
 //
@@ -43,15 +42,6 @@ struct PopServer {}
 impl PopServer {
     pub const DEFAULT_PORT: u16 = 50088;
     pub const DEFAULT_REGISTER_ROUTE: &str = "/api/v2/pop-server/register-behavior";
-}
-
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    #[arg(short('p'), long("port"))]
-    port: Option<u16>,
-    #[arg(short('r'), long("register-route"))]
-    register_route: Option<String>,
 }
 
 async fn pop_server(
@@ -72,20 +62,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     env_logger::init();
     info!("\npop-server starting up\n");
 
-    info!("parsing command-line arguments");
-    let args = Args::parse();
+    let port: u16 = env::var("POP_SERVER_LISTEN_PORT")
+        .map_err(|e| e.to_string())
+        .and_then(|v| v.parse::<u16>().map_err(|e| e.to_string()))
+        .unwrap_or(PopServer::DEFAULT_PORT);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], args.port.unwrap_or(PopServer::DEFAULT_PORT)));
+    let register_route: String = env::var("POP_SERVER_REGISTER_ROUTE")
+        .map_err(|e| e.to_string())
+        .unwrap_or(PopServer::DEFAULT_REGISTER_ROUTE.to_string());
+
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     info!("socket address: {}", addr);
 
     let listener = TcpListener::bind(addr).await?;
 
     let behaviors: Arc<Mutex<HashMap<String, RouteBehavior>>> =
         Arc::new(Mutex::new(HashMap::new()));
-
-    let register_route = &args
-        .register_route
-        .unwrap_or(PopServer::DEFAULT_REGISTER_ROUTE.to_string());
 
     loop {
         let reg_route: String = register_route.clone();

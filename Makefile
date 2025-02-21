@@ -27,9 +27,10 @@ test: fmt
 
 test-register-behavior:
 	curl -v -X POST \
-		--header "x-pop-server-path: /some-endpoint" \
-		--header "x-pop-server-method: GET" \
-		--header "x-pop-server-content-type: application/json" \
+		--header "content-type: application/json" \
+		--header "x-pop-server-request-path: /some-endpoint" \
+		--header "x-pop-server-request-method: GET" \
+		--header "x-pop-server-response-content-type: application/json" \
 		--header "x-pop-server-status: 200" \
 		--data '{"meta":"xyz","data":"xyz"}' \
 		http://localhost:50088/api/v2/pop-server/register-behavior

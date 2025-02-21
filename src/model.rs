@@ -3,7 +3,7 @@
 // Copyright (C) 2025 Josep Bigorra (jjba23) <jjbigorra@gmail.com>
 
 // pop-server is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
+// it under the terms of the Lesser GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
@@ -12,14 +12,15 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-// You should have received a copy of the GNU General Public License
+// You should have received a copy of the Lesser GNU General Public License
 // along with pop-server.  If not, see <https://www.gnu.org/licenses/>.
 
 #[derive(Debug, Clone)]
 pub struct RouteBehavior {
-    pub method: String,
-    pub path: String,
-    pub content_type: String,
-    pub body: String,
-    pub status: u16,
+    pub request_method: String,
+    pub request_path: String,
+    pub request_content_type: Option<String>,
+    pub response_content_type: String,
+    pub response_body: String,
+    pub response_status: u16,
 }

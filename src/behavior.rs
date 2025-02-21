@@ -3,7 +3,7 @@
 // Copyright (C) 2025 Josep Bigorra (jjba23) <jjbigorra@gmail.com>
 
 // pop-server is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
+// it under the terms of the Lesser GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
@@ -12,7 +12,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-// You should have received a copy of the GNU General Public License
+// You should have received a copy of the Lesser GNU General Public License
 // along with pop-server.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::collections::HashMap;
@@ -37,7 +37,9 @@ fn get_header(headers: &hyper::HeaderMap, key: &str) -> Option<String> {
 fn make_behavior_key(behavior: RouteBehavior) -> String {
     format!(
         "{}::{}::{}",
-        behavior.method, behavior.path, behavior.content_type
+        behavior.request_method,
+        behavior.request_path,
+        behavior.request_content_type.unwrap_or("nil".to_string())
     )
 }
 
@@ -51,8 +53,8 @@ fn make_behavior_key_from_request(request: &Request<hyper::body::Incoming>) -> S
             .get("content-type")
             .and_then(|v| v.to_str().ok())
             .map(String::from)
-            .ok_or("application/json")
-            .unwrap_or("application/json".to_string())
+            .ok_or("nil")
+            .unwrap_or("nil".to_string())
     )
 }
 
@@ -62,11 +64,14 @@ pub async fn register_behaviour(
 ) -> Result<Response<Full<Bytes>>, hyper::http::Error> {
     info!("starting registration of behavior");
 
-    let wanted_method = get_header(request.headers(), "x-pop-server-method").unwrap_or_default();
-    let wanted_path = get_header(request.headers(), "x-pop-server-path").unwrap_or_default();
-    let wanted_content_type = get_header(request.headers(), "x-pop-server-content-type")
-        .unwrap_or_else(|| "application/json".to_string());
-    let wanted_status: u16 = get_header(request.headers(), "x-pop-server-status")
+    let request_method =
+        get_header(request.headers(), "x-pop-server-request-method").unwrap_or("GET".to_string());
+    let request_path =
+        get_header(request.headers(), "x-pop-server-request-path").unwrap_or("/".to_string());
+    let request_content_type = get_header(request.headers(), "x-pop-server-request-content-type");
+    let response_content_type = get_header(request.headers(), "x-pop-server-response-content-type")
+        .unwrap_or("application/json".to_string());
+    let response_status: u16 = get_header(request.headers(), "x-pop-server-response-status")
         .and_then(|s| s.parse().ok())
         .unwrap_or(200);
 
@@ -81,11 +86,12 @@ pub async fn register_behaviour(
     let wanted_body = String::from_utf8_lossy(&body_bytes).into_owned();
 
     let route_behavior = RouteBehavior {
-        method: wanted_method,
-        status: wanted_status,
-        path: wanted_path,
-        content_type: wanted_content_type,
-        body: wanted_body,
+        request_method,
+        response_status,
+        request_path,
+        request_content_type,
+        response_content_type,
+        response_body: wanted_body,
     };
     let k = make_behavior_key(route_behavior.clone());
     let behaviors = behaviors.lock();
@@ -121,9 +127,9 @@ pub async fn fetch_behaviour(
             info!("found behavior: {:?}", behavior);
 
             Response::builder()
-                .status(behavior.status)
-                .header("content-type", behavior.content_type.clone()) // Clone required
-                .body(Full::new(Bytes::from(behavior.body.clone())))
+                .status(behavior.response_status)
+                .header("content-type", behavior.response_content_type.clone())
+                .body(Full::new(Bytes::from(behavior.response_body.clone())))
         }
         None => {
             error!("no match found, using default behavior");
