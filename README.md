@@ -1,18 +1,3 @@
-
-# Table of Contents
-
-    -   [Overview](#org76078f4)
-    -   [Features](#org4c0f4c8)
-    -   [Installation](#org4670684)
-    -   [Usage](#org60827d2)
-        -   [Register a Behavior](#org120697e)
-        -   [Fetch a Behavior](#org26d616d)
--   [API Reference](#orgc18fd26)
-    -   [POST /api/v2/pop-server/register-behavior](#orgb10fbce)
-    -   [Dynamic Behavior Matching](#org4ab6bcd)
-    -   [License](#orga548a0c)
-    -   [Author](#orgc0f1c9b)
-
 ![img](https://raster.shields.io/badge/Rust-v1.84-b7410e.png) ![img](https://raster.shields.io/badge/Nix-Flake-1f5cd6.png)
 
 pop-server - a puppet server, at your command.
@@ -20,14 +5,10 @@ pop-server - a puppet server, at your command.
 This a web-server that helps you simulate behaviours and test integrations with external systems.
 
 
-<a id="org76078f4"></a>
-
 ## Overview
 
 `pop-server` is a lightweight HTTP server that allows dynamic behavior registration and retrieval. It acts as a simple puppet server where you can define request-response behaviors dynamically via HTTP requests. This can be useful for testing, mocking APIs, or creating programmable server responses.
 
-
-<a id="org4c0f4c8"></a>
 
 ## Features
 
@@ -36,8 +17,6 @@ This a web-server that helps you simulate behaviours and test integrations with 
 -   Supports custom HTTP methods, paths, content types, and response statuses.
 -   Built with **Rust**, using **Hyper** for HTTP handling and **Tokio** for async networking.
 
-
-<a id="org4670684"></a>
 
 ## Installation
 
@@ -53,8 +32,6 @@ If you don't use Nix, ensure you have Rust installed. You can install Rust via r
 The project uses Cargo to build Rust code and [Makefile](Makefile) for automating tasks and the build processes. 
 
 
-<a id="org60827d2"></a>
-
 ## Usage
 
 By default, the server listens on `http://127.0.0.1:50088`
@@ -67,8 +44,6 @@ You can start pop-server with certain environment variables to override behavior
 
 `POP_SERVER_REGISTER_ROUTE` - Route where behaviors are registered, defaults to `/api/v2/pop-server/register-behavior`
 
-
-<a id="org120697e"></a>
 
 ### Register a Behavior
 
@@ -83,8 +58,6 @@ To register a new behavior (in memory), send a **POST** request to the register 
        --data '{"message": "Hello, world!"}'
 
 
-<a id="org26d616d"></a>
-
 ### Fetch a Behavior
 
 Once a behavior is registered (in-memory), you can retrieve it by making a request matching the registered method and path:
@@ -94,12 +67,8 @@ Once a behavior is registered (in-memory), you can retrieve it by making a reque
 If a match is found, the stored behavior is returned; otherwise, a `404 Not Found` response is given.
 
 
-<a id="orgc18fd26"></a>
-
 # API Reference
 
-
-<a id="orgb10fbce"></a>
 
 ## POST /api/v2/pop-server/register-behavior
 
@@ -118,8 +87,6 @@ Endpoint to register behaviors.
 -   JSON or any other valid body content that you wish to later return.
 
 
-<a id="org4ab6bcd"></a>
-
 ## Dynamic Behavior Matching
 
 If an incoming request matches a registered behavior (method & path), the server responds with the stored content.
@@ -127,14 +94,10 @@ If an incoming request matches a registered behavior (method & path), the server
 Otherwise, it returns a `404 Not Found`.
 
 
-<a id="orga548a0c"></a>
-
 ## License
 
 `pop-server` is licensed under the **Lesser GNU General Public License v3.0**. See the COPYING file or <https://www.gnu.org/licenses/lgpl-3.0.html> for more details.
 
-
-<a id="orgc0f1c9b"></a>
 
 ## Author
 
