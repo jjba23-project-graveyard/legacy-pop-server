@@ -22,9 +22,12 @@ This a web-server that helps you simulate behaviours and test integrations with 
 
 ** Installation
 
-A Nix flake is provided at the root of this repo.
+You can find releases at:
 
-I also regularly upload new Docker images to Docker hub: https://hub.docker.com/repository/docker/jjba23/pop-server/general
+crates.io: https://crates.io/crates/pop-server
+dockerhub: https://hub.docker.com/repository/docker/jjba23/pop-server/general
+
+A Nix flake is provided at the root of this repo.
 
 If you don't use Nix, ensure you have Rust installed. You can install Rust via rustup: https://rustup.rs/
 
@@ -91,7 +94,7 @@ Otherwise, it returns a ~404 Not Found~.
 
 ** License
 
-~pop-server~ is licensed under the *GNU General Public License v3.0*. See the COPYING file or https://www.gnu.org/licenses/gpl-3.0.html for more details.
+~pop-server~ is licensed under the *Lesser GNU General Public License v3.0*. See the COPYING file or https://www.gnu.org/licenses/lgpl-3.0.html for more details.
 
 ** Author
 Created by *Josep Bigorra (jjba23)*. For contributions, issues, or questions, contact: mailto:jjbigorra@gmail.com.

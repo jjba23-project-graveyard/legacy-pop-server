@@ -64,5 +64,5 @@ container-push:
 publish-manual:
 	$(call pop-server-log-info,"generating readme for pop-server")
 	emacs -Q --batch \
-		-l $(shell realpath ./src/manual/pop-server-manual.el) \
+		-l $(shell realpath ./src/pop-server-manual.el) \
 		--funcall pop-server/publish-readme
