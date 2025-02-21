@@ -15,6 +15,11 @@
 # You should have received a copy of the Lesser GNU General Public License
 # along with pop-server.  If not, see <https://www.gnu.org/licenses/>.
 
+# pop-server-log-info: Logs informational messages in custom format with highlight.
+define pop-server-log-info
+	@printf "\n\033[1m[INFO] $(shell date --rfc-3339=seconds) - %s\033[0m\n" $(1)
+endef
+
 run:
 	RUST_LOG=debug nix develop -c cargo run
 
@@ -54,3 +59,10 @@ container-run:
 container-push:
 	podman push jjba23/pop-server:$(CONTAINER_TAG)
 
+
+# publish-manual: Generates and publishes the manual from Org files using Emacs.
+publish-manual:
+	$(call pop-server-log-info,"generating readme for pop-server")
+	emacs -Q --batch \
+		-l $(shell realpath ./src/manual/pop-server-manual.el) \
+		--funcall pop-server/publish-readme
