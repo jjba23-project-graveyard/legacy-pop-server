@@ -24,8 +24,8 @@ This a web-server that helps you simulate behaviours and test integrations with 
 
 You can find releases at:
 
-crates.io: https://crates.io/crates/pop-server
-dockerhub: https://hub.docker.com/repository/docker/jjba23/pop-server/general
+- crates.io: https://crates.io/crates/pop-server
+- dockerhub: https://hub.docker.com/repository/docker/jjba23/pop-server/general
 
 A Nix flake is provided at the root of this repo.
 
